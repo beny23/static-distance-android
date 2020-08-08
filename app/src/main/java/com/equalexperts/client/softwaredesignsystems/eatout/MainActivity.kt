@@ -6,9 +6,8 @@ import androidx.core.content.ContextCompat
 import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutInfoWindow
 import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutMarkerStyler
 import kotlinx.android.synthetic.main.activity_main.*
-import org.osmdroid.bonuspack.kml.*
+import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.util.BoundingBox
-import org.osmdroid.views.overlay.FolderOverlay
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
 import kotlin.concurrent.thread
@@ -19,34 +18,65 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        configureMap()
+
+        fetchRestaurants()
+    }
+
+    private fun configureMap() {
         mainMap.setMultiTouchControls(true)
 
         mainMap.post {
-            mainMap.zoomToBoundingBox(BoundingBox(51.58663191759393, -0.03303900824656125, 51.426609140984745, -0.20833197699653283), false)
+            mainMap.zoomToBoundingBox(
+                BoundingBox(
+                    51.58663191759393,
+                    -0.03303900824656125,
+                    51.426609140984745,
+                    -0.20833197699653283
+                ), false
+            )
         }
 
         mainMap.setScrollableAreaLimitLongitude(-8.6085, 1.6088, 0)
         mainMap.setScrollableAreaLimitLatitude(60.8573, 49.1916, 0)
 
-        val defaultMarker = ContextCompat.getDrawable(this, R.drawable.ic_marker)!!
-        val infoWindow = EatOutToHelpOutInfoWindow(mainMap) {
-            (application as EatOutToHelpOutApplication).serviceLayer.restaurantInfoProvider.provideRestaurantInfo(it)
-        }
+        mainMap.minZoomLevel = 17.0
+        mainMap.maxZoomLevel = 21.0
+    }
 
-        val eatOutToHelpOutMarkerStyler = EatOutToHelpOutMarkerStyler(defaultMarker, infoWindow)
-
+    private fun fetchRestaurants() {
         thread {
-            val restaurants = KmlDocument().apply {
-                parseGeoJSON(GZIPInputStream(resources.openRawResource(R.raw.restaurants)).readBytes().toString(Charset.defaultCharset()))
-            }
-            mainMap.post {
-                restaurants.mKmlRoot.mItems.first().mExtendedData
-                val restaurantOverlay = restaurants.mKmlRoot.buildOverlay(mainMap, null,
-                    eatOutToHelpOutMarkerStyler, restaurants) as FolderOverlay
 
-                mainMap.overlays.add(restaurantOverlay)
-                mainMap.invalidate()
+            val restaurantsGeoJSON =
+                GZIPInputStream(resources.openRawResource(R.raw.restaurants)).readBytes()
+                    .toString(Charset.defaultCharset())
+
+            val restaurants = KmlDocument().apply {
+                parseGeoJSON(restaurantsGeoJSON)
             }
+
+            displayRestaurants(restaurants)
+        }
+    }
+
+    private fun displayRestaurants(
+        restaurants: KmlDocument
+    ) {
+        mainMap.post {
+            val infoWindow = EatOutToHelpOutInfoWindow(mainMap) {
+                (application as EatOutToHelpOutApplication).serviceLayer.restaurantInfoProvider.provideRestaurantInfo(
+                    it
+                )
+            }
+            val defaultMarker = ContextCompat.getDrawable(this, R.drawable.ic_marker)!!
+            val eatOutToHelpOutMarkerStyler = EatOutToHelpOutMarkerStyler(defaultMarker, infoWindow)
+            val restaurantOverlay = restaurants.mKmlRoot.buildOverlay(
+                mainMap, null,
+                eatOutToHelpOutMarkerStyler, restaurants
+            )
+
+            mainMap.overlays.add(restaurantOverlay)
+            mainMap.invalidate()
         }
     }
 
