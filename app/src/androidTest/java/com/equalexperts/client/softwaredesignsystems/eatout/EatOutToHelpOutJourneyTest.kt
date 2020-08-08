@@ -76,4 +76,15 @@ class EatOutToHelpOutJourneyTest {
 
         onView(withId(R.id.viewRestaurant)).check(doesNotExist())
     }
+
+    @Test
+    fun mapIsLockedToTheUK() {
+        onView(withId(R.id.mainMap)).perform(dragMapTo(48.0, 2.0))
+
+        onView(withId(R.id.mainMap)).check(matches(outsideOfBounds(48.0, 2.0)))
+
+        onView(withId(R.id.mainMap)).perform(dragMapTo(61.0, -9.0))
+
+        onView(withId(R.id.mainMap)).check(matches(outsideOfBounds(61.0, -9.0)))
+    }
 }

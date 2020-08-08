@@ -9,6 +9,7 @@ import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.hamcrest.Matcher
 import org.osmdroid.util.BoundingBox
+import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.FolderOverlay
 import org.osmdroid.views.overlay.Marker
@@ -33,6 +34,19 @@ internal fun clickOnMarkerWithText(restaurantName: String): ViewAction {
     }
 }
 
+internal fun dragMapTo(latitude: Double, longitude: Double): ViewAction {
+    return object : ViewAction {
+        override fun getDescription() = "Drag the map to latitude and longitude: $latitude, $longitude"
+
+        override fun getConstraints() = ViewMatchers.isAssignableFrom(MapView::class.java)
+
+        override fun perform(uiController: UiController?, view: View?) {
+            val mapView = view as MapView
+            mapView.controller.setCenter(GeoPoint(latitude, longitude))
+        }
+    }
+}
+
 internal fun hasOverlayWithText(restaurantName: String): BaseMatcher<in View> {
     return object : BaseMatcher<View?>() {
         override fun describeTo(description: Description) {
@@ -51,6 +65,21 @@ internal fun hasOverlayWithText(restaurantName: String): BaseMatcher<in View> {
         }
     }
 
+}
+
+internal fun outsideOfBounds(latitude: Double, longitude: Double): Matcher<in View> {
+    return object : BaseMatcher<View?>() {
+        override fun describeTo(description: Description) {
+            description.appendText("map is not displaying $latitude $longitude")
+        }
+
+        override fun matches(item: Any): Boolean {
+            if (item is MapView) {
+                return !item.boundingBox.contains(latitude, longitude)
+            }
+            return false
+        }
+    }
 }
 
 internal fun mapDisplayingBoundingBoxNear(boundingBox: BoundingBox): Matcher<in View> {

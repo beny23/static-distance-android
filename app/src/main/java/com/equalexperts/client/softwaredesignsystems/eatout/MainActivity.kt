@@ -25,6 +25,9 @@ class MainActivity : AppCompatActivity() {
             mainMap.zoomToBoundingBox(BoundingBox(51.58663191759393, -0.03303900824656125, 51.426609140984745, -0.20833197699653283), false)
         }
 
+        mainMap.setScrollableAreaLimitLongitude(-8.6085, 1.6088, 0)
+        mainMap.setScrollableAreaLimitLatitude(60.8573, 49.1916, 0)
+
         val defaultMarker = ContextCompat.getDrawable(this, R.drawable.ic_marker)!!
         val infoWindow = EatOutToHelpOutInfoWindow(mainMap) {
             (application as EatOutToHelpOutApplication).serviceLayer.restaurantInfoProvider.provideRestaurantInfo(it)
