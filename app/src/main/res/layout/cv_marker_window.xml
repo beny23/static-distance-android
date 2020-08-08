@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:padding="12dp"
+    android:background="@drawable/bg_popup"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <TextView
+        android:id="@id/bubble_title"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:text="Restaurant name"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bubble_description" />
+
+    <TextView
+        android:id="@id/bubble_description"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        tools:text="Description"
+        app:layout_constraintTop_toBottomOf="@id/bubble_title"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bubble_subdescription" />
+
+    <TextView
+        android:id="@id/bubble_subdescription"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        tools:text="Subdescription"
+        app:layout_constraintTop_toBottomOf="@id/bubble_description"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/viewRestaurant"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/viewRestaurant"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawableEnd="@drawable/ic_view_restaurant"
+        android:paddingEnd="12dp"
+        android:text="View"
+        android:background="?selectableItemBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/bubble_subdescription" />
+
+    <ImageView
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:contentDescription="@null"
+        android:visibility="gone"
+        android:id="@id/bubble_image"
+        android:layout_width="0dp"
+        android:layout_height="0dp" />
+</androidx.constraintlayout.widget.ConstraintLayout>

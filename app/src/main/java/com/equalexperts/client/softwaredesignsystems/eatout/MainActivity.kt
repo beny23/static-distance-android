@@ -3,10 +3,12 @@ package com.equalexperts.client.softwaredesignsystems.eatout
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutInfoWindow
 import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutMarkerStyler
 import kotlinx.android.synthetic.main.activity_main.*
 import org.osmdroid.bonuspack.kml.*
 import org.osmdroid.util.BoundingBox
+import org.osmdroid.views.overlay.FolderOverlay
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
 import kotlin.concurrent.thread
@@ -24,10 +26,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         val defaultMarker = ContextCompat.getDrawable(this, R.drawable.ic_marker)!!
-        val eatOutToHelpOutMarkerStyler =
-            EatOutToHelpOutMarkerStyler(
-                defaultMarker
-            )
+        val infoWindow = EatOutToHelpOutInfoWindow(mainMap) {
+            (application as EatOutToHelpOutApplication).serviceLayer.restaurantInfoProvider.provideRestaurantInfo(it)
+        }
+
+        val eatOutToHelpOutMarkerStyler = EatOutToHelpOutMarkerStyler(defaultMarker, infoWindow)
 
         thread {
             val restaurants = KmlDocument().apply {
@@ -36,7 +39,8 @@ class MainActivity : AppCompatActivity() {
             mainMap.post {
                 restaurants.mKmlRoot.mItems.first().mExtendedData
                 val restaurantOverlay = restaurants.mKmlRoot.buildOverlay(mainMap, null,
-                    eatOutToHelpOutMarkerStyler, restaurants)
+                    eatOutToHelpOutMarkerStyler, restaurants) as FolderOverlay
+
                 mainMap.overlays.add(restaurantOverlay)
                 mainMap.invalidate()
             }
