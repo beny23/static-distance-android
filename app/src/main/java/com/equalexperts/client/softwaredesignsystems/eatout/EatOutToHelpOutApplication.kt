@@ -1,10 +1,8 @@
 package com.equalexperts.client.softwaredesignsystems.eatout
 
 import android.app.Application
-import com.equalexperts.client.softwaredesignsystems.eatout.services.ExternalBrowserRestaurantInfoProvider
-import com.equalexperts.client.softwaredesignsystems.eatout.services.LocationSearchService
-import com.equalexperts.client.softwaredesignsystems.eatout.services.RemoteLocationSearchService
-import com.equalexperts.client.softwaredesignsystems.eatout.services.RestaurantInfoProvider
+import android.content.Context
+import com.equalexperts.client.softwaredesignsystems.eatout.services.*
 import org.osmdroid.config.Configuration
 
 class EatOutToHelpOutApplication : Application() {
@@ -17,6 +15,8 @@ class EatOutToHelpOutApplication : Application() {
                 get() = ExternalBrowserRestaurantInfoProvider(this@EatOutToHelpOutApplication)
             override val locationSearchService: LocationSearchService
                 get() = RemoteLocationSearchService("https://www.eat-out-to-help-out.co/")
+            override val lastViewedLocationService: LastViewedLocationService
+                get() = SharedPrefsLastViewedLocationService(getSharedPreferences("last_location", Context.MODE_PRIVATE))
         }
         Configuration.getInstance().userAgentValue = packageName
     }

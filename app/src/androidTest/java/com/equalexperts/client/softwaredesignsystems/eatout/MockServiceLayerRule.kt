@@ -6,9 +6,13 @@ import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
 
-class MockServiceLayer(override val restaurantInfoProvider: RestaurantInfoProvider, override val locationSearchService: LocationSearchService) : ServiceLayer
+class MockServiceLayer(
+    override val restaurantInfoProvider: RestaurantInfoProvider,
+    override val locationSearchService: LocationSearchService,
+    override val lastViewedLocationService: LastViewedLocationService
+) : ServiceLayer
 
-class MockRestaurantInfoProvider: RestaurantInfoProvider {
+class MockRestaurantInfoProvider : RestaurantInfoProvider {
     lateinit var infoProvidedForRestaurant: Restaurant
 
     override fun provideRestaurantInfo(restaurant: Restaurant) {
@@ -24,7 +28,10 @@ class MockLocationSearchService : LocationSearchService {
     }
 
     override fun search(query: String, response: (LocationSearchResult) -> Unit) {
-        response(stubLocations[query]?:throw IllegalStateException("Result for $query has not been stubbed"))
+        response(
+            stubLocations[query]
+                ?: throw IllegalStateException("Result for $query has not been stubbed")
+        )
     }
 
     fun simulateUnavailableLocation(searchLocation: String) {
@@ -40,17 +47,36 @@ class MockLocationSearchService : LocationSearchService {
     }
 }
 
-class MockServiceLayerRule: TestRule {
+class MockLastViewedLocationService : LastViewedLocationService {
+    var storedLocation: Location? = null
+    private var lastLocation = Location(53.6601, -2.4946)
+
+    fun simulateLastViewedLocation(lastViewedLocation: Location) {
+        lastLocation = lastViewedLocation
+    }
+
+    override var lastViewedLocation: Location
+        get() = lastLocation
+        set(value) { storedLocation = value }
+}
+
+class MockServiceLayerRule : TestRule {
 
     val mockRestaurantInfoProvider = MockRestaurantInfoProvider()
     val mockLocationSearchService = MockLocationSearchService()
+    val mockLastViewedLocationService = MockLastViewedLocationService()
 
     override fun apply(base: Statement?, description: Description?): Statement {
         return object : Statement() {
             override fun evaluate() {
-                val application = ApplicationProvider.getApplicationContext<EatOutToHelpOutApplication>()
+                val application =
+                    ApplicationProvider.getApplicationContext<EatOutToHelpOutApplication>()
 
-                application.serviceLayer = MockServiceLayer(mockRestaurantInfoProvider, mockLocationSearchService)
+                application.serviceLayer = MockServiceLayer(
+                    mockRestaurantInfoProvider,
+                    mockLocationSearchService,
+                    mockLastViewedLocationService
+                )
 
                 base?.evaluate()
             }

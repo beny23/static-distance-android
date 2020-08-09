@@ -1,12 +1,12 @@
 package com.equalexperts.client.softwaredesignsystems.eatout
 
 import android.os.Bundle
-import android.util.Log
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutInfoWindow
 import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutMarkerStyler
+import com.equalexperts.client.softwaredesignsystems.eatout.services.Location
 import com.equalexperts.client.softwaredesignsystems.eatout.services.LocationSearchResult
 import kotlinx.android.synthetic.main.activity_main.*
 import org.osmdroid.bonuspack.kml.KmlDocument
@@ -51,14 +51,20 @@ class MainActivity : AppCompatActivity() {
         mainMap.setMultiTouchControls(true)
 
         mainMap.post {
-            mainMap.zoomToBoundingBox(
-                BoundingBox(
-                    51.51461167022675,
-                    -0.11984109878540039,
-                    51.50305280863187,
-                    -0.13142824172973633
-                ), false
-            )
+//            mainMap.zoomToBoundingBox(
+//                BoundingBox(
+//                    51.51461167022675,
+//                    -0.11984109878540039,
+//                    51.50305280863187,
+//                    -0.13142824172973633
+//                ), false
+//            )
+
+            val lastViewedLocation =
+                (application as EatOutToHelpOutApplication).serviceLayer.lastViewedLocationService.lastViewedLocation
+            val geoPoint = GeoPoint(lastViewedLocation.latitude, lastViewedLocation.longitude)
+            mainMap.zoomToBoundingBox(BoundingBox.fromGeoPoints(listOf(geoPoint)), false)
+//            mainMap.controller.setCenter(geoPoint)
         }
 
         mainMap.setScrollableAreaLimitLongitude(-8.6085, 1.6088, 0)
@@ -66,6 +72,7 @@ class MainActivity : AppCompatActivity() {
 
         mainMap.minZoomLevel = 17.0
         mainMap.maxZoomLevel = 21.0
+
     }
 
     private fun fetchRestaurants() {
@@ -110,6 +117,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        val mapCenter = mainMap.getMapCenter()
+        (application as EatOutToHelpOutApplication).serviceLayer.lastViewedLocationService.lastViewedLocation = Location(mapCenter.latitude, mapCenter.longitude)
         mainMap.onPause()
     }
 }

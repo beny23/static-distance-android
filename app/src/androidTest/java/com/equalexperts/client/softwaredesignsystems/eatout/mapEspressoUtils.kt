@@ -6,6 +6,7 @@ import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.matcher.ViewMatchers
 import androidx.test.platform.app.InstrumentationRegistry
+import com.equalexperts.client.softwaredesignsystems.eatout.services.Location
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.hamcrest.Matcher
@@ -27,9 +28,10 @@ internal fun clickOnMarkerWithText(restaurantName: String): ViewAction {
             val mapView = view as MapView
             val folderOverlay = mapView.overlays.find { it is FolderOverlay } as FolderOverlay
 
-            val marker = folderOverlay.items.find { (it as Marker).title == restaurantName } as Marker?
+            val marker =
+                folderOverlay.items.find { (it as Marker).title == restaurantName } as Marker?
 
-            marker?.let { it.showInfoWindow() }?:throw NoMatchingViewException.Builder()
+            marker?.let { it.showInfoWindow() } ?: throw NoMatchingViewException.Builder()
                 .build()
         }
     }
@@ -37,7 +39,8 @@ internal fun clickOnMarkerWithText(restaurantName: String): ViewAction {
 
 internal fun dragMapTo(latitude: Double, longitude: Double): ViewAction {
     return object : ViewAction {
-        override fun getDescription() = "Drag the map to latitude and longitude: $latitude, $longitude"
+        override fun getDescription() =
+            "Drag the map to latitude and longitude: $latitude, $longitude"
 
         override fun getConstraints() = ViewMatchers.isAssignableFrom(MapView::class.java)
 
@@ -110,6 +113,22 @@ internal fun mapDisplayingBoundingBoxNear(boundingBox: BoundingBox): Matcher<in 
                         abs(item.boundingBox.latSouth) - abs(boundingBox.latSouth) < 0.01 &&
                         abs(item.boundingBox.lonEast) - abs(boundingBox.lonEast) < 0.01 &&
                         abs(item.boundingBox.lonWest) - abs(boundingBox.lonWest) < 0.01
+            }
+            return false
+        }
+    }
+}
+
+internal fun mapCentreCloseToLocation(location: Location): Matcher<in View> {
+    return object : BaseMatcher<View?>() {
+        override fun describeTo(description: Description) {
+            description.appendText("map displaying location within 0.01 degrees of ${location.latitude}, ${location.longitude}")
+        }
+
+        override fun matches(item: Any): Boolean {
+            if (item is MapView) {
+                return abs(item.mapCenter.latitude) - abs(location.latitude) < 0.01 &&
+                return abs(item.mapCenter.longitude) - abs(location.longitude) < 0.01
             }
             return false
         }
