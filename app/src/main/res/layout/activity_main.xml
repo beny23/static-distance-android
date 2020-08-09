@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".MainActivity">
 
     <org.osmdroid.views.MapView
@@ -10,4 +11,29 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         tilesource="Mapnik" />
+
+
+    <ImageView
+        android:id="@+id/logo"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:src="@mipmap/ic_launcher_foreground"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"/>
+
+    <androidx.appcompat.widget.AppCompatEditText
+        android:elevation="8dp"
+        android:layout_marginEnd="32dp"
+        android:outlineProvider="background"
+        android:imeOptions="actionSearch"
+        android:background="@drawable/bg_input"
+        app:layout_constraintStart_toEndOf="@id/logo"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:id="@+id/search"
+        android:inputType="text|textPostalAddress"
+        app:layout_constraintTop_toTopOf="@id/logo"
+        app:layout_constraintBottom_toBottomOf="@id/logo"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
