@@ -29,8 +29,8 @@ class RemoteLocationSearchService(baseUrl: String) : LocationSearchService {
     private val api = retrofit.create(EatOutToHelpOutApi::class.java)
 
     override fun search(query: String, response: (LocationSearchResult) -> Unit) {
-        val sanitisedQuery = query.filter { it.isLetter() }.toUpperCase(Locale.ROOT)
-        if (sanitisedQuery.length < 4) {
+        val sanitisedQuery = query.filter(Char::isLetterOrDigit).toUpperCase(Locale.ROOT)
+        if (sanitisedQuery.length < 3) {
             response(LocationSearchResult.NotFound)
         } else {
             performApiCall(response, sanitisedQuery)
@@ -41,7 +41,7 @@ class RemoteLocationSearchService(baseUrl: String) : LocationSearchService {
         response: (LocationSearchResult) -> Unit,
         query: String
     ) {
-        api.search("${query[0]}", "${query[1]}", query.substring(0, 4)).enqueue(object : Callback<String?> {
+        api.search("${query[0]}", "${query[1]}", if (query.length > 4) query.substring(0, 4) else query).enqueue(object : Callback<String?> {
             override fun onFailure(call: Call<String?>, t: Throwable) {
                 response(LocationSearchResult.NetworkError)
             }
@@ -52,14 +52,20 @@ class RemoteLocationSearchService(baseUrl: String) : LocationSearchService {
                         val apiResponse = response.body()?.let { body ->
                             body
                                 .split("\n")
-                                .drop(1)
-                                .filter { !it.isBlank() }
+                                .filter { !it.isBlank() && it != "id,postcode,lat,lon" }
                                 .map {
                                     val (_, name, lat, lon) = it.split(",")
                                     ApiResponse(name, lat.toDouble(), lon.toDouble())
                                 }
                                 .firstOrNull {
-                                    it.name == query.toUpperCase(Locale.ROOT).replace(" ", "")
+                                    val lastDigit = query.indexOfLast(Char::isDigit)
+                                    if (lastDigit != -1 && lastDigit != query.length-1) {
+                                        val postcode = query.substring(0, lastDigit) + " " + query.substring(lastDigit)
+                                        it.name == postcode
+                                    }
+                                    else {
+                                        it.name == query
+                                    }
                                 }
                         }
                         apiResponse?.let {

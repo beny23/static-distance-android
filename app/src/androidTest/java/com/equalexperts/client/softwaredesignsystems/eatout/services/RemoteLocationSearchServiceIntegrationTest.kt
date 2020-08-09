@@ -53,10 +53,10 @@ class RemoteLocationSearchServiceIntegrationTest {
     }
 
     @Test
-    fun searchRequestMustBeAtLeast4CharactersOtherwiseLocationNotFound() {
+    fun searchRequestMustBeAtLeast3CharactersOtherwiseLocationNotFound() {
         givenSearchResultsFor("AQUERY", Location(1.234, 5.678))
 
-        whenASearchHappens("a qu")
+        whenASearchHappens("a q")
 
         thenTheResultIsNotFound()
 
@@ -70,6 +70,27 @@ class RemoteLocationSearchServiceIntegrationTest {
         whenASearchHappens("a !£%query")
 
         thenRequestMadeTo("/outcode/A/Q/AQUE.csv")
+    }
+
+    @Test
+    fun canSearchForPartialPostcode() {
+        givenSearchResultsFor("M25", Location(1.234, 5.678))
+
+        whenASearchHappens("m25")
+
+        thenRequestMadeTo("/outcode/M/2/M25.csv")
+    }
+
+    @Test
+    fun canSearchForAFullPostcode() {
+        val expectedLocation = Location(1.234, 5.678)
+        givenSearchResultsFor("M25 1XX", expectedLocation)
+
+        whenASearchHappens("m251xx")
+
+        thenRequestMadeTo("/outcode/M/2/M251.csv")
+
+        thenTheResultIsSuccessWithLocation(expectedLocation)
     }
 
     private fun givenServiceError() {
@@ -87,6 +108,7 @@ class RemoteLocationSearchServiceIntegrationTest {
                 id,postcode,lat,lon
                 ID,${query},${expectedLocation.latitude},${expectedLocation.longitude}
                 ID,NOTAQUERY,2.234,6.678
+                id,postcode,lat,lon
                 ID,STILLNOTAQUERY,3.234,7.678
                 
             """.trimIndent().trimMargin()
