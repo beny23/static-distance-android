@@ -82,6 +82,21 @@ internal fun outsideOfBounds(latitude: Double, longitude: Double): Matcher<in Vi
     }
 }
 
+internal fun insideOfBounds(latitude: Double, longitude: Double): Matcher<in View> {
+    return object : BaseMatcher<View?>() {
+        override fun describeTo(description: Description) {
+            description.appendText("map is displaying $latitude $longitude")
+        }
+
+        override fun matches(item: Any): Boolean {
+            if (item is MapView) {
+                return item.boundingBox.contains(latitude, longitude)
+            }
+            return false
+        }
+    }
+}
+
 internal fun mapDisplayingBoundingBoxNear(boundingBox: BoundingBox): Matcher<in View> {
     return object : BaseMatcher<View?>() {
         override fun describeTo(description: Description) {

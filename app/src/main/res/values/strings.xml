@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Eat Out To Help Out</string>
+    <string name="location_not_found">Location not found</string>
 </resources>

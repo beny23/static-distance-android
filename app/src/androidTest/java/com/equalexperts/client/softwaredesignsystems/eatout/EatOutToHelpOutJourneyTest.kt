@@ -2,14 +2,14 @@ package com.equalexperts.client.softwaredesignsystems.eatout
 
 import androidx.test.core.app.ActivityScenario.launch
 import androidx.test.espresso.Espresso.onView
-import androidx.test.espresso.action.ViewActions.click
+import androidx.test.espresso.action.ViewActions.*
 import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
 import androidx.test.platform.app.InstrumentationRegistry
+import com.equalexperts.client.softwaredesignsystems.eatout.services.Location
 import com.equalexperts.client.softwaredesignsystems.eatout.services.Restaurant
 import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.Matchers.not
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -86,5 +86,22 @@ class EatOutToHelpOutJourneyTest {
         onView(withId(R.id.mainMap)).perform(dragMapTo(61.0, -9.0))
 
         onView(withId(R.id.mainMap)).check(matches(outsideOfBounds(61.0, -9.0)))
+    }
+
+    @Test
+    fun canSearchForATownOrCityOrPostcode() {
+        mockServiceLayer.mockLocationSearchService.simulateAvailableLocation("Testtown" to Location(53.4161, -2.6491))
+
+        onView(withId(R.id.search)).perform(typeText("Testtown"), pressImeActionButton())
+
+        onView(withId(R.id.mainMap)).check(matches(insideOfBounds(53.4161, -2.6491)))
+    }
+
+    @Test
+    fun userIsNotifiedOfEmptySearchResults() {
+        mockServiceLayer.mockLocationSearchService.simulateUnavailableLocation("Not found Testtown")
+        onView(withId(R.id.search)).perform(typeText("Not found Testtown"), pressImeActionButton())
+
+        onView(withId(R.id.search)).check(matches(hasErrorText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.location_not_found))))
     }
 }

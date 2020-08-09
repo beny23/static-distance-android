@@ -1,13 +1,17 @@
 package com.equalexperts.client.softwaredesignsystems.eatout
 
 import android.os.Bundle
+import android.util.Log
+import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutInfoWindow
 import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutMarkerStyler
+import com.equalexperts.client.softwaredesignsystems.eatout.services.LocationSearchResult
 import kotlinx.android.synthetic.main.activity_main.*
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.util.BoundingBox
+import org.osmdroid.util.GeoPoint
 import java.nio.charset.Charset
 import java.util.zip.GZIPInputStream
 import kotlin.concurrent.thread
@@ -21,6 +25,24 @@ class MainActivity : AppCompatActivity() {
         configureMap()
 
         fetchRestaurants()
+
+        search.setOnEditorActionListener { v, actionId, event ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) {
+                performSearch(search.text.toString())
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    private fun performSearch(text: String) {
+        (application as EatOutToHelpOutApplication).serviceLayer.locationSearchService.search(text) {
+            when (it) {
+                is LocationSearchResult.Success -> mainMap.controller.animateTo(GeoPoint(it.location.latitude, it.location.longitude))
+                is LocationSearchResult.NotFound -> search.error = getString(R.string.location_not_found)
+            }
+        }
     }
 
     private fun configureMap() {
@@ -46,7 +68,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun fetchRestaurants() {
         thread {
-
             val restaurantsGeoJSON =
                 GZIPInputStream(resources.openRawResource(R.raw.restaurants)).readBytes()
                     .toString(Charset.defaultCharset())
@@ -88,5 +109,6 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         mainMap.onPause()
+        Log.d("WOOO", "BOUNDING BOX: ${mainMap.boundingBox}")
     }
 }
