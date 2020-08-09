@@ -44,10 +44,10 @@ class EatOutToHelpOutJourneyTest {
             matches(
                 mapDisplayingBoundingBoxNear(
                     BoundingBox(
-                        51.58,
-                        -0.03,
-                        51.42,
-                        -0.20
+                        51.51,
+                        -0.11,
+                        51.50,
+                        -0.13
                     )
                 )
             )

@@ -29,10 +29,10 @@ class MainActivity : AppCompatActivity() {
         mainMap.post {
             mainMap.zoomToBoundingBox(
                 BoundingBox(
-                    51.58663191759393,
-                    -0.03303900824656125,
-                    51.426609140984745,
-                    -0.20833197699653283
+                    51.51461167022675,
+                    -0.11984109878540039,
+                    51.50305280863187,
+                    -0.13142824172973633
                 ), false
             )
         }
