@@ -111,6 +111,5 @@ class MainActivity : AppCompatActivity() {
     override fun onPause() {
         super.onPause()
         mainMap.onPause()
-        Log.d("WOOO", "BOUNDING BOX: ${mainMap.boundingBox}")
     }
 }
