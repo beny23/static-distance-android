@@ -4,6 +4,8 @@ data class Location(val latitude: Double, val longitude: Double)
 
 sealed class LocationSearchResult {
     object NotFound : LocationSearchResult()
+    object NetworkError : LocationSearchResult()
+    object ServerError : LocationSearchResult()
     data class Success(val location: Location) : LocationSearchResult()
 }
 

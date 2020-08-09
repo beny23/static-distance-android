@@ -102,6 +102,23 @@ class EatOutToHelpOutJourneyTest {
         mockServiceLayer.mockLocationSearchService.simulateUnavailableLocation("Not found Testtown")
         onView(withId(R.id.search)).perform(typeText("Not found Testtown"), pressImeActionButton())
 
-        onView(withId(R.id.search)).check(matches(hasErrorText(InstrumentationRegistry.getInstrumentation().targetContext.getString(R.string.location_not_found))))
+        onView(withId(R.id.search)).check(matches(hasErrorText(R.string.location_not_found)))
     }
+
+    @Test
+    fun userIsNotifiedOfNetworkErrors() {
+        mockServiceLayer.mockLocationSearchService.simulateNetworkErrorForLocation("Network Error Town")
+        onView(withId(R.id.search)).perform(typeText("Network Error Town"), pressImeActionButton())
+
+        onView(withId(R.id.search)).check(matches(hasErrorText(R.string.location_network_error)))
+    }
+
+    @Test
+    fun userIsNotifiedOfServerErrors() {
+        mockServiceLayer.mockLocationSearchService.simulateServerErrorForLocation("Server Error Town")
+        onView(withId(R.id.search)).perform(typeText("Server Error Town"), pressImeActionButton())
+
+        onView(withId(R.id.search)).check(matches(hasErrorText(R.string.location_server_error)))
+    }
+
 }

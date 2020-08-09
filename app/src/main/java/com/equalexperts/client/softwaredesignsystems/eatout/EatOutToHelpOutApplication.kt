@@ -16,7 +16,7 @@ class EatOutToHelpOutApplication : Application() {
             override val restaurantInfoProvider: RestaurantInfoProvider
                 get() = ExternalBrowserRestaurantInfoProvider(this@EatOutToHelpOutApplication)
             override val locationSearchService: LocationSearchService
-                get() = RemoteLocationSearchService()
+                get() = RemoteLocationSearchService("https://www.eat-out-to-help-out.co/")
         }
         Configuration.getInstance().userAgentValue = packageName
     }

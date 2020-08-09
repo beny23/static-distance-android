@@ -30,6 +30,14 @@ class MockLocationSearchService : LocationSearchService {
     fun simulateUnavailableLocation(searchLocation: String) {
         stubLocations += searchLocation to LocationSearchResult.NotFound
     }
+
+    fun simulateNetworkErrorForLocation(searchLocation: String) {
+        stubLocations += searchLocation to LocationSearchResult.NetworkError
+    }
+
+    fun simulateServerErrorForLocation(searchLocation: String) {
+        stubLocations += searchLocation to LocationSearchResult.ServerError
+    }
 }
 
 class MockServiceLayerRule: TestRule {

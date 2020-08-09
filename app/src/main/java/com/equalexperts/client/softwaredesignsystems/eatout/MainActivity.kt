@@ -26,7 +26,7 @@ class MainActivity : AppCompatActivity() {
 
         fetchRestaurants()
 
-        search.setOnEditorActionListener { v, actionId, event ->
+        search.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 performSearch(search.text.toString())
                 true
@@ -41,6 +41,8 @@ class MainActivity : AppCompatActivity() {
             when (it) {
                 is LocationSearchResult.Success -> mainMap.controller.animateTo(GeoPoint(it.location.latitude, it.location.longitude))
                 is LocationSearchResult.NotFound -> search.error = getString(R.string.location_not_found)
+                is LocationSearchResult.NetworkError -> search.error = getString(R.string.location_network_error)
+                is LocationSearchResult.ServerError -> search.error = getString(R.string.location_server_error)
             }
         }
     }

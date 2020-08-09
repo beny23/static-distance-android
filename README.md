@@ -21,5 +21,8 @@ cp target/restaurants.geojson.gz ../app/src/main/res/raw/restaurants.gz
 ```
 
 ## OpenSource Attributions
-This project uses the [omsdroid OpenStreetMaps library](https://github.com/osmdroid/osmdroid). 
-This project uses the [osmbonuspack library](https://github.com/MKergall/osmbonuspack).
+This project uses the following OpenSource libraries:
+ * [omsdroid OpenStreetMaps library](https://github.com/osmdroid/osmdroid) 
+ * [osmbonuspack library](https://github.com/MKergall/osmbonuspack)
+ * [Retrofit](https://square.github.io/retrofit/)
+ * [MockWebServer](https://github.com/square/okhttp/tree/master/mockwebserver)

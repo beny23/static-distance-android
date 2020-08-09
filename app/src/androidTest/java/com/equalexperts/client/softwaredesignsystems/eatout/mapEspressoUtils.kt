@@ -5,6 +5,7 @@ import androidx.test.espresso.NoMatchingViewException
 import androidx.test.espresso.UiController
 import androidx.test.espresso.ViewAction
 import androidx.test.espresso.matcher.ViewMatchers
+import androidx.test.platform.app.InstrumentationRegistry
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.hamcrest.Matcher
@@ -114,3 +115,10 @@ internal fun mapDisplayingBoundingBoxNear(boundingBox: BoundingBox): Matcher<in 
         }
     }
 }
+
+internal fun hasErrorText(stringResource: Int) =
+    ViewMatchers.hasErrorText(
+        InstrumentationRegistry.getInstrumentation().targetContext.getString(
+            stringResource
+        )
+    )
