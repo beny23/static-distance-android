@@ -18,14 +18,7 @@ class EatOutToHelpOutApplication : Application() {
             override val lastViewedLocationService: LastViewedLocationService
                 get() = SharedPrefsLastViewedLocationService(getSharedPreferences("last_location", Context.MODE_PRIVATE))
             override val restaurantService: RestaurantService
-                get() = object : RestaurantService {
-                    override fun fetchRestaurants(
-                        location: Location,
-                        results: (RestaurantServiceResult) -> Unit
-                    ) {
-                        results(RestaurantServiceResult.Success(listOf(Restaurant("WOO", "WOO 123", location))))
-                    }
-                }
+                get() = RemoteRestaurantService("https://www.eat-out-to-help-out.co/")
         }
         Configuration.getInstance().userAgentValue = packageName
     }
