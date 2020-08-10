@@ -12,8 +12,12 @@ import com.equalexperts.client.softwaredesignsystems.eatout.services.RestaurantS
 import kotlinx.android.synthetic.main.activity_main.*
 import org.osmdroid.bonuspack.kml.KmlDocument
 import org.osmdroid.bonuspack.kml.KmlPlacemark
+import org.osmdroid.events.MapListener
+import org.osmdroid.events.ScrollEvent
+import org.osmdroid.events.ZoomEvent
 import org.osmdroid.util.BoundingBox
 import org.osmdroid.util.GeoPoint
+import org.osmdroid.views.overlay.FolderOverlay
 
 
 class MainActivity : AppCompatActivity() {
@@ -22,8 +26,6 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         configureMap()
-
-        fetchRestaurants()
 
         search.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
@@ -38,10 +40,18 @@ class MainActivity : AppCompatActivity() {
     private fun performSearch(text: String) {
         services().locationSearchService.search(text) {
             when (it) {
-                is LocationSearchResult.Success -> mainMap.controller.animateTo(GeoPoint(it.location.latitude, it.location.longitude))
-                is LocationSearchResult.NotFound -> search.error = getString(R.string.location_not_found)
-                is LocationSearchResult.NetworkError -> search.error = getString(R.string.location_network_error)
-                is LocationSearchResult.ServerError -> search.error = getString(R.string.location_server_error)
+                is LocationSearchResult.Success -> mainMap.controller.animateTo(
+                    GeoPoint(
+                        it.location.latitude,
+                        it.location.longitude
+                    )
+                )
+                is LocationSearchResult.NotFound -> search.error =
+                    getString(R.string.location_not_found)
+                is LocationSearchResult.NetworkError -> search.error =
+                    getString(R.string.location_network_error)
+                is LocationSearchResult.ServerError -> search.error =
+                    getString(R.string.location_server_error)
             }
         }
     }
@@ -54,6 +64,7 @@ class MainActivity : AppCompatActivity() {
                 services().lastViewedLocationService.lastViewedLocation
             val geoPoint = GeoPoint(lastViewedLocation.latitude, lastViewedLocation.longitude)
             mainMap.zoomToBoundingBox(BoundingBox.fromGeoPoints(listOf(geoPoint)), false)
+            fetchRestaurants(lastViewedLocation)
         }
 
         mainMap.setScrollableAreaLimitLongitude(-8.6085, 1.6088, 0)
@@ -62,30 +73,45 @@ class MainActivity : AppCompatActivity() {
         mainMap.minZoomLevel = 17.0
         mainMap.maxZoomLevel = 21.0
 
-    }
-
-    private fun fetchRestaurants() {
-        mainMap.post {
-            val mapCenter = mainMap.mapCenter
-            services().restaurantService.fetchRestaurants(
-                Location(
+        var lastLocation = Location(0.0, 0.0)
+        mainMap.addMapListener(object : MapListener {
+            override fun onScroll(event: ScrollEvent): Boolean {
+                val mapCenter = mainMap.mapCenter
+                val targetLocation = Location(
                     mapCenter.latitude,
                     mapCenter.longitude
                 )
-            ) {
-                when (it) {
-                    is RestaurantServiceResult.Success -> {
-                        val document = KmlDocument()
-                        it.restaurants.forEach { restaurant ->
-                            document.mKmlRoot.add(
-                                KmlPlacemark(
-                                    restaurant.toMarker(mainMap)
-                                ).apply {
-                                    setExtendedData("postcode", restaurant.postcode)
-                                })
-                        }
-                        displayRestaurants(document)
+
+                if (targetLocation.gridX != lastLocation.gridX || targetLocation.gridY != lastLocation.gridY) {
+                    lastLocation = targetLocation
+                    fetchRestaurants(targetLocation)
+                }
+                return false
+            }
+
+            override fun onZoom(event: ZoomEvent?): Boolean {
+                return false
+            }
+        })
+    }
+
+    private fun fetchRestaurants(targetLocation: Location) {
+
+        services().restaurantService.fetchRestaurants(
+            targetLocation
+        ) {
+            when (it) {
+                is RestaurantServiceResult.Success -> {
+                    val document = KmlDocument()
+                    it.restaurants.forEach { restaurant ->
+                        document.mKmlRoot.add(
+                            KmlPlacemark(
+                                restaurant.toMarker(mainMap)
+                            ).apply {
+                                setExtendedData("postcode", restaurant.postcode)
+                            })
                     }
+                    displayRestaurants(document)
                 }
             }
         }
@@ -107,6 +133,7 @@ class MainActivity : AppCompatActivity() {
                 eatOutToHelpOutMarkerStyler, restaurants
             )
 
+            mainMap.overlays.removeAll { it is FolderOverlay }
             mainMap.overlays.add(restaurantOverlay)
             mainMap.invalidate()
         }
@@ -119,8 +146,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        val mapCenter = mainMap.getMapCenter()
-        services().lastViewedLocationService.lastViewedLocation = Location(mapCenter.latitude, mapCenter.longitude)
+        val mapCenter = mainMap.mapCenter
+        services().lastViewedLocationService.lastViewedLocation =
+            Location(mapCenter.latitude, mapCenter.longitude)
         mainMap.onPause()
     }
 

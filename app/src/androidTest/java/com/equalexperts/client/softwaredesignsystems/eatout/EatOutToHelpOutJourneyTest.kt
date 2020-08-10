@@ -12,6 +12,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.equalexperts.client.softwaredesignsystems.eatout.services.Location
 import com.equalexperts.client.softwaredesignsystems.eatout.services.Restaurant
 import org.hamcrest.CoreMatchers.`is`
+import org.hamcrest.Matchers.not
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
@@ -150,5 +151,23 @@ class EatOutToHelpOutJourneyTest {
         assertThat(mockServiceLayer.mockRestaurantInfoProvider.infoProvidedForRestaurant, `is`(testRestaurant))
 
         onView(withId(R.id.viewRestaurant)).check(doesNotExist())
+    }
+
+    @Test
+    fun willLoadRestaurantsWhenGridLocationChanges() {
+        val expectedLocation = testRestaurant.location
+        val expectedNewRestaurant = Restaurant("Freshly Loaded Restaurant", "TS1 0DE", Location(51.50834, -0.12570))
+
+        mockServiceLayer.mockLastViewedLocationService.simulateLastViewedLocation(expectedLocation)
+
+        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
+        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(Location(51.50834, -0.12570), listOf(expectedNewRestaurant))
+
+        onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
+
+        onView(withId(R.id.mainMap)).perform(swipeUp())
+
+        onView(withId(R.id.mainMap)).check(matches(hasOverlayWithText(expectedNewRestaurant.name)))
+        onView(withId(R.id.mainMap)).check(matches(not(hasOverlayWithText(testRestaurant.name))))
     }
 }
