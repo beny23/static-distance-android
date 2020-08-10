@@ -14,7 +14,6 @@ import com.equalexperts.client.softwaredesignsystems.eatout.services.Restaurant
 import org.hamcrest.CoreMatchers.`is`
 import org.junit.Assert.assertEquals
 import org.junit.Before
-import org.junit.Ignore
 import org.junit.Rule
 import org.junit.Test
 import org.osmdroid.config.Configuration
@@ -24,7 +23,7 @@ class EatOutToHelpOutJourneyTest {
     @get:Rule
     val mockServiceLayer = MockServiceLayerRule()
 
-    private val testRestaurant = Restaurant("Stub Restaurant for testing purposes", "WC2N 4HZ")
+    private val testRestaurant = Restaurant("Stub Restaurant for testing purposes", "WC2N 4HZ", Location(51.5089, -0.1257))
 
     private lateinit var scenario: ActivityScenario<MainActivity>
 
@@ -60,31 +59,6 @@ class EatOutToHelpOutJourneyTest {
 
         assertEquals(expectedLocation.latitude, mockServiceLayer.mockLastViewedLocationService.storedLocation!!.latitude, 0.01)
         assertEquals(expectedLocation.longitude, mockServiceLayer.mockLastViewedLocationService.storedLocation!!.longitude, 0.01)
-    }
-
-    @Test
-    fun willDisplayRestaurants() {
-        onView(withId(R.id.mainMap)).check(matches(hasOverlayWithText(testRestaurant.name)))
-    }
-
-    @Ignore
-    @Test
-    fun tappingARestaurantRevealsInformation() {
-        onView(withId(R.id.mainMap)).perform(clickOnMarkerWithText(testRestaurant.name))
-
-        onView(withText(testRestaurant.postcode)).check(matches(isDisplayed()))
-    }
-
-    @Ignore
-    @Test
-    fun tappingOnRestaurantInformationWillNavigateToSearchEngine() {
-        onView(withId(R.id.mainMap)).perform(clickOnMarkerWithText(testRestaurant.name))
-
-        onView(withId(R.id.viewRestaurant)).perform(click())
-
-        assertThat(mockServiceLayer.mockRestaurantInfoProvider.infoProvidedForRestaurant, `is`(testRestaurant))
-
-        onView(withId(R.id.viewRestaurant)).check(doesNotExist())
     }
 
     @Test
@@ -133,9 +107,48 @@ class EatOutToHelpOutJourneyTest {
 
     @Test
     fun willFetchRestaurantForLocationOnLoad() {
+        val expectedLocation = Location(51.51, -0.11)
 
+        mockServiceLayer.mockLastViewedLocationService.simulateLastViewedLocation(expectedLocation)
+
+        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
 
         onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
 
+        onView(withId(R.id.mainMap)).check(matches(hasOverlayWithText(testRestaurant.name)))
+    }
+
+    @Test
+    fun tappingARestaurantRevealsInformation() {
+        val expectedLocation = testRestaurant.location
+
+        mockServiceLayer.mockLastViewedLocationService.simulateLastViewedLocation(expectedLocation)
+
+        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
+
+        onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
+
+        onView(withId(R.id.mainMap)).perform(clickOnMarkerWithText(testRestaurant.name))
+
+        onView(withText(testRestaurant.postcode)).check(matches(isDisplayed()))
+    }
+
+    @Test
+    fun tappingOnRestaurantInformationWillNavigateToSearchEngine() {
+        val expectedLocation = testRestaurant.location
+
+        mockServiceLayer.mockLastViewedLocationService.simulateLastViewedLocation(expectedLocation)
+
+        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
+
+        onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
+
+        onView(withId(R.id.mainMap)).perform(clickOnMarkerWithText(testRestaurant.name))
+
+        onView(withId(R.id.viewRestaurant)).perform(click())
+
+        assertThat(mockServiceLayer.mockRestaurantInfoProvider.infoProvidedForRestaurant, `is`(testRestaurant))
+
+        onView(withId(R.id.viewRestaurant)).check(doesNotExist())
     }
 }

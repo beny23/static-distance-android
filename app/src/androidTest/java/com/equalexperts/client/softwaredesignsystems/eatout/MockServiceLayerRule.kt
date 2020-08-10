@@ -9,7 +9,8 @@ import org.junit.runners.model.Statement
 class MockServiceLayer(
     override val restaurantInfoProvider: RestaurantInfoProvider,
     override val locationSearchService: LocationSearchService,
-    override val lastViewedLocationService: LastViewedLocationService
+    override val lastViewedLocationService: LastViewedLocationService,
+    override val restaurantService: RestaurantService
 ) : ServiceLayer
 
 class MockRestaurantInfoProvider : RestaurantInfoProvider {
@@ -60,11 +61,26 @@ class MockLastViewedLocationService : LastViewedLocationService {
         set(value) { storedLocation = value }
 }
 
+class MockRestaurantService : RestaurantService {
+    private val resultMap = mutableMapOf<Location, RestaurantServiceResult>()
+
+    fun simulateRestaurantsAvailable(location: Location, restaurants: List<Restaurant>) {
+        resultMap[location] = RestaurantServiceResult.Success(restaurants)
+    }
+
+    override fun fetchRestaurants(location: Location, results: (RestaurantServiceResult) -> Unit) {
+        resultMap[location]?.let {
+            results(it)
+        }
+    }
+}
+
 class MockServiceLayerRule : TestRule {
 
     val mockRestaurantInfoProvider = MockRestaurantInfoProvider()
     val mockLocationSearchService = MockLocationSearchService()
     val mockLastViewedLocationService = MockLastViewedLocationService()
+    val mockRestaurantService = MockRestaurantService()
 
     override fun apply(base: Statement?, description: Description?): Statement {
         return object : Statement() {
@@ -75,7 +91,8 @@ class MockServiceLayerRule : TestRule {
                 application.serviceLayer = MockServiceLayer(
                     mockRestaurantInfoProvider,
                     mockLocationSearchService,
-                    mockLastViewedLocationService
+                    mockLastViewedLocationService,
+                    mockRestaurantService
                 )
 
                 base?.evaluate()

@@ -26,7 +26,7 @@ internal fun clickOnMarkerWithText(restaurantName: String): ViewAction {
 
         override fun perform(uiController: UiController?, view: View?) {
             val mapView = view as MapView
-            val folderOverlay = mapView.overlays.find { it is FolderOverlay } as FolderOverlay
+            val folderOverlay = mapView.overlays.find { it is FolderOverlay } as? FolderOverlay ?: throw IllegalStateException("Map view currently has no folder overlays")
 
             val marker =
                 folderOverlay.items.find { (it as Marker).title == restaurantName } as Marker?
