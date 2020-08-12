@@ -130,8 +130,6 @@ class EatOutToHelpOutJourneyTest {
         onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
 
         onView(withId(R.id.mainMap)).perform(clickOnMarkerWithText(testRestaurant.name))
-
-        onView(withText(testRestaurant.postcode)).check(matches(isDisplayed()))
     }
 
     @Test

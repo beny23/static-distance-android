@@ -1,6 +1,6 @@
 package com.equalexperts.client.softwaredesignsystems.eatout.map
 
-import android.widget.Button
+import android.widget.ImageButton
 import com.equalexperts.client.softwaredesignsystems.eatout.R
 import com.equalexperts.client.softwaredesignsystems.eatout.services.Restaurant
 import com.equalexperts.client.softwaredesignsystems.eatout.toRestaurant
@@ -13,7 +13,7 @@ class EatOutToHelpOutInfoWindow(
     private val onRestaurantViewClicked: (Restaurant) -> Unit
 ) : MarkerInfoWindow(R.layout.cv_marker_window, mainMap) {
 
-    private val viewButton by lazy { view.findViewById<Button>(R.id.viewRestaurant) }
+    private val viewButton by lazy { view.findViewById<ImageButton>(R.id.viewRestaurant) }
 
     override fun onOpen(item: Any?) {
         super.onOpen(item)

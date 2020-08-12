@@ -3,4 +3,5 @@
     <string name="location_not_found">Location not found</string>
     <string name="location_network_error">Check your network connectivity</string>
     <string name="location_server_error">Something went wrong</string>
+    <string name="search_hint">Search by postcode or town</string>
 </resources>
