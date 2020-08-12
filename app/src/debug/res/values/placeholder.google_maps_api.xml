@@ -1,0 +1,4 @@
+<resources>
+<!--    Rename this file to google_maps_api.xml and populate the google_maps_keys resource value with your google maps api key -->
+<!--    <string name="google_maps_key" templateMergeStrategy="preserve" translatable="false">POPULATE KEY HERE</string>-->
+</resources>

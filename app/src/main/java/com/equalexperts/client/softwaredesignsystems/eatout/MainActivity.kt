@@ -1,26 +1,39 @@
 package com.equalexperts.client.softwaredesignsystems.eatout
 
+import android.Manifest
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutInfoWindow
-import com.equalexperts.client.softwaredesignsystems.eatout.map.EatOutToHelpOutMarkerStyler
 import com.equalexperts.client.softwaredesignsystems.eatout.services.Location
 import com.equalexperts.client.softwaredesignsystems.eatout.services.LocationSearchResult
+import com.equalexperts.client.softwaredesignsystems.eatout.services.Restaurant
 import com.equalexperts.client.softwaredesignsystems.eatout.services.RestaurantServiceResult
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.SupportMapFragment
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.clustering.ClusterItem
+import com.google.maps.android.clustering.ClusterManager
 import kotlinx.android.synthetic.main.activity_main.*
-import org.osmdroid.bonuspack.kml.KmlDocument
-import org.osmdroid.bonuspack.kml.KmlPlacemark
-import org.osmdroid.events.MapListener
-import org.osmdroid.events.ScrollEvent
-import org.osmdroid.events.ZoomEvent
-import org.osmdroid.util.BoundingBox
-import org.osmdroid.util.GeoPoint
-import org.osmdroid.views.overlay.FolderOverlay
 
+class RestaurantClusterItem(val restaurant: Restaurant) : ClusterItem {
+    private val gmapsPosition = LatLng(restaurant.location.latitude, restaurant.location.longitude)
+
+    override fun getSnippet() = restaurant.postcode
+
+    override fun getTitle() = restaurant.name
+
+    override fun getPosition() = gmapsPosition
+}
 
 class MainActivity : AppCompatActivity() {
+
+    private lateinit var map: GoogleMap
+    private lateinit var markerClusterManager: ClusterManager<RestaurantClusterItem>
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -38,12 +51,12 @@ class MainActivity : AppCompatActivity() {
     private fun performSearch(text: String) {
         services().locationSearchService.search(text) {
             when (it) {
-                is LocationSearchResult.Success -> mainMap.controller.animateTo(
-                    GeoPoint(
-                        it.location.latitude,
-                        it.location.longitude
+                is LocationSearchResult.Success -> map.moveCamera(
+                    CameraUpdateFactory.newLatLng(
+                        LatLng(it.location.latitude, it.location.longitude)
                     )
                 )
+
                 is LocationSearchResult.NotFound -> search.error =
                     getString(R.string.location_not_found)
                 is LocationSearchResult.NetworkError -> search.error =
@@ -55,99 +68,75 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun configureMap() {
-        mainMap.setMultiTouchControls(true)
-
-        mainMap.post {
-            val lastViewedLocation =
-                services().lastViewedLocationService.lastViewedLocation
-            val geoPoint = GeoPoint(lastViewedLocation.latitude, lastViewedLocation.longitude)
-            mainMap.zoomToBoundingBox(BoundingBox.fromGeoPoints(listOf(geoPoint)), false)
-            fetchRestaurants(lastViewedLocation)
-        }
-
-        mainMap.setScrollableAreaLimitLongitude(-8.6085, 1.6088, 0)
-        mainMap.setScrollableAreaLimitLatitude(60.8573, 49.1916, 0)
-
-        mainMap.minZoomLevel = 17.0
-        mainMap.maxZoomLevel = 21.0
-
         var lastLocation = Location(0.0, 0.0)
-        mainMap.addMapListener(object : MapListener {
-            override fun onScroll(event: ScrollEvent): Boolean {
-                val mapCenter = mainMap.mapCenter
-                val targetLocation = Location(
-                    mapCenter.latitude,
-                    mapCenter.longitude
-                )
 
+        val mapFragment = supportFragmentManager
+            .findFragmentById(R.id.map) as SupportMapFragment
+        mapFragment.getMapAsync(OnMapReadyCallback {
+            map = it
+
+            map.setOnMyLocationButtonClickListener(GoogleMap.OnMyLocationButtonClickListener { false })
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+            ) {
+                map.isMyLocationEnabled = true
+            } else {
+
+            }
+
+            map.setMinZoomPreference(10.0f)
+            map.setMaxZoomPreference(50.0f)
+            markerClusterManager = ClusterManager(this, map)
+            map.setOnCameraIdleListener(markerClusterManager)
+            map.setOnMarkerClickListener(markerClusterManager)
+
+            markerClusterManager.setOnClusterItemInfoWindowClickListener {
+                services().restaurantInfoProvider.provideRestaurantInfo(it.restaurant)
+            }
+
+            val lastViewedLocation = services().lastViewedLocationService.lastViewedLocation
+
+            map.moveCamera(
+                CameraUpdateFactory.newLatLng(
+                    LatLng(lastViewedLocation.latitude, lastViewedLocation.longitude)
+                )
+            )
+            fetchRestaurants(lastViewedLocation)
+
+
+            map.setOnCameraMoveListener {
+                val targetLocation = Location(
+                    map.cameraPosition.target.latitude,
+                    map.cameraPosition.target.longitude
+                )
                 if (targetLocation.gridX != lastLocation.gridX || targetLocation.gridY != lastLocation.gridY) {
                     lastLocation = targetLocation
                     fetchRestaurants(targetLocation)
                 }
-                return false
-            }
-
-            override fun onZoom(event: ZoomEvent?): Boolean {
-                return false
             }
         })
     }
 
     private fun fetchRestaurants(targetLocation: Location) {
 
-        services().restaurantService.fetchRestaurants(
-            targetLocation
-        ) {
+        services().restaurantService.fetchRestaurants(targetLocation) {
             when (it) {
                 is RestaurantServiceResult.Success -> {
-                    val document = KmlDocument()
+                    markerClusterManager.clearItems()
                     it.restaurants.forEach { restaurant ->
-                        document.mKmlRoot.add(
-                            KmlPlacemark(
-                                restaurant.toMarker(mainMap)
-                            ).apply {
-                                setExtendedData("postcode", restaurant.postcode)
-                            })
+                        markerClusterManager.addItem(RestaurantClusterItem(restaurant))
                     }
-                    displayRestaurants(document)
+                    markerClusterManager.cluster()
                 }
             }
         }
     }
 
-    private fun displayRestaurants(
-        restaurants: KmlDocument
-    ) {
-        mainMap.post {
-            val infoWindow = EatOutToHelpOutInfoWindow(mainMap) {
-                services().restaurantInfoProvider.provideRestaurantInfo(
-                    it
-                )
-            }
-            val defaultMarker = ContextCompat.getDrawable(this, R.drawable.ic_marker)!!
-            val eatOutToHelpOutMarkerStyler = EatOutToHelpOutMarkerStyler(defaultMarker, infoWindow)
-            val restaurantOverlay = restaurants.mKmlRoot.buildOverlay(
-                mainMap, null,
-                eatOutToHelpOutMarkerStyler, restaurants
-            )
-
-            mainMap.overlays.removeAll { it is FolderOverlay }
-            mainMap.overlays.add(restaurantOverlay)
-            mainMap.invalidate()
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        mainMap.onResume()
-    }
 
     override fun onPause() {
         super.onPause()
-        val mapCenter = mainMap.mapCenter
         services().lastViewedLocationService.lastViewedLocation =
-            Location(mapCenter.latitude, mapCenter.longitude)
-        mainMap.onPause()
+            Location(map.cameraPosition.target.latitude, map.cameraPosition.target.longitude)
     }
 
     private fun services() = (application as EatOutToHelpOutApplication).serviceLayer

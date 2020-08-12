@@ -3,7 +3,6 @@ package com.equalexperts.client.softwaredesignsystems.eatout
 import android.app.Application
 import android.content.Context
 import com.equalexperts.client.softwaredesignsystems.eatout.services.*
-import org.osmdroid.config.Configuration
 
 class EatOutToHelpOutApplication : Application() {
     lateinit var serviceLayer: ServiceLayer
@@ -20,7 +19,6 @@ class EatOutToHelpOutApplication : Application() {
             override val restaurantService: RestaurantService
                 get() = RemoteRestaurantService("https://www.eat-out-to-help-out.co/")
         }
-        Configuration.getInstance().userAgentValue = packageName
     }
 
 }

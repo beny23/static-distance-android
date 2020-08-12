@@ -14,8 +14,8 @@ data class Location(val latitude: Double, val longitude: Double) {
         return (latitude * 1_000.0).toInt() + (longitude * 1_000_000.0).toInt()
     }
 
-    val gridX = ((latitude - 49.0) / 0.075).roundToInt()
-    val gridY = ((longitude + 9) / 0.1375).roundToInt()
+    val gridX = ((latitude - 49.0) / 0.075).roundToInt() -1
+    val gridY = ((longitude + 9) / 0.1375).roundToInt() -1
 }
 
 sealed class LocationSearchResult {
