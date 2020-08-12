@@ -30,10 +30,8 @@ class MainActivity : AppCompatActivity() {
         search.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
                 performSearch(search.text.toString())
-                true
-            } else {
-                false
             }
+            false
         }
     }
 
