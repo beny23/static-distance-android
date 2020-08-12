@@ -1,6 +1,7 @@
 package com.equalexperts.client.softwaredesignsystems.eatout
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.inputmethod.EditorInfo
@@ -12,7 +13,6 @@ import com.equalexperts.client.softwaredesignsystems.eatout.services.Restaurant
 import com.equalexperts.client.softwaredesignsystems.eatout.services.RestaurantServiceResult
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
-import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.SupportMapFragment
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.clustering.ClusterItem
@@ -37,6 +37,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        logo.setOnClickListener {
+            startActivity(Intent(this, AboutActivity::class.java))
+        }
 
         configureMap()
 
@@ -72,17 +76,8 @@ class MainActivity : AppCompatActivity() {
 
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
-        mapFragment.getMapAsync(OnMapReadyCallback {
+        mapFragment.getMapAsync {
             map = it
-
-            map.setOnMyLocationButtonClickListener(GoogleMap.OnMyLocationButtonClickListener { false })
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
-                == PackageManager.PERMISSION_GRANTED
-            ) {
-                map.isMyLocationEnabled = true
-            } else {
-
-            }
 
             map.setMinZoomPreference(10.0f)
             map.setMaxZoomPreference(50.0f)
@@ -114,7 +109,7 @@ class MainActivity : AppCompatActivity() {
                     fetchRestaurants(targetLocation)
                 }
             }
-        })
+        }
     }
 
     private fun fetchRestaurants(targetLocation: Location) {

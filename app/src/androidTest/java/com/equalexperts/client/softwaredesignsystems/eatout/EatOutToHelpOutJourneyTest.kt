@@ -1,23 +1,18 @@
 package com.equalexperts.client.softwaredesignsystems.eatout
 
-import androidx.lifecycle.Lifecycle
+import android.os.SystemClock
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ActivityScenario.launch
 import androidx.test.espresso.Espresso.onView
 import androidx.test.espresso.action.ViewActions.*
-import androidx.test.espresso.assertion.ViewAssertions.doesNotExist
 import androidx.test.espresso.assertion.ViewAssertions.matches
 import androidx.test.espresso.matcher.ViewMatchers.*
-import androidx.test.platform.app.InstrumentationRegistry
 import com.equalexperts.client.softwaredesignsystems.eatout.services.Location
 import com.equalexperts.client.softwaredesignsystems.eatout.services.Restaurant
 import org.hamcrest.CoreMatchers.`is`
-import org.hamcrest.Matchers.not
-import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.osmdroid.config.Configuration
 
 class EatOutToHelpOutJourneyTest {
 
@@ -28,58 +23,18 @@ class EatOutToHelpOutJourneyTest {
 
     private lateinit var scenario: ActivityScenario<MainActivity>
 
+    private fun onMapView() = onView(withContentDescription("Google Map"))
+
     @Before
     fun launchApp() {
         scenario = launch(MainActivity::class.java)
     }
 
     @Test
-    fun userAgentWillBeProvidedToOmsdroidLib() {
-        assertEquals(
-            Configuration.getInstance().userAgentValue,
-            InstrumentationRegistry.getInstrumentation().targetContext.packageName
-        )
-    }
+    fun aUserCanLearnAboutTheApp() {
+        onView(withId(R.id.logo)).perform(click())
 
-    @Test
-    fun mapDefaultsToLastLocationViewed() {
-        val expectedLocation = Location(51.51, -0.11)
-
-        mockServiceLayer.mockLastViewedLocationService.simulateLastViewedLocation(expectedLocation)
-
-        onView(withId(R.id.mainMap)).check(matches(mapCentreCloseToLocation(expectedLocation)))
-    }
-
-    @Test
-    fun mapWillPersistLastViewedLocationWhenUserLeaves() {
-        val expectedLocation = Location(52.45, -0.01)
-
-        onView(withId(R.id.mainMap)).perform(dragMapTo(expectedLocation.latitude, expectedLocation.longitude))
-
-        scenario.moveToState(Lifecycle.State.DESTROYED)
-
-        assertEquals(expectedLocation.latitude, mockServiceLayer.mockLastViewedLocationService.storedLocation!!.latitude, 0.01)
-        assertEquals(expectedLocation.longitude, mockServiceLayer.mockLastViewedLocationService.storedLocation!!.longitude, 0.01)
-    }
-
-    @Test
-    fun mapIsLockedToTheUK() {
-        onView(withId(R.id.mainMap)).perform(dragMapTo(48.0, 2.0))
-
-        onView(withId(R.id.mainMap)).check(matches(outsideOfBounds(48.0, 2.0)))
-
-        onView(withId(R.id.mainMap)).perform(dragMapTo(61.0, -9.0))
-
-        onView(withId(R.id.mainMap)).check(matches(outsideOfBounds(61.0, -9.0)))
-    }
-
-    @Test
-    fun canSearchForATownOrCityOrPostcode() {
-        mockServiceLayer.mockLocationSearchService.simulateAvailableLocation("Testtown" to Location(53.4161, -2.6491))
-
-        onView(withId(R.id.search)).perform(typeText("Testtown"), pressImeActionButton())
-
-        onView(withId(R.id.mainMap)).check(matches(insideOfBounds(53.4161, -2.6491)))
+        onView(withText(R.string.about_title)).check(matches(isDisplayed()))
     }
 
     @Test
@@ -107,19 +62,6 @@ class EatOutToHelpOutJourneyTest {
     }
 
     @Test
-    fun willFetchRestaurantForLocationOnLoad() {
-        val expectedLocation = Location(51.51, -0.11)
-
-        mockServiceLayer.mockLastViewedLocationService.simulateLastViewedLocation(expectedLocation)
-
-        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
-
-        onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
-
-        onView(withId(R.id.mainMap)).check(matches(hasOverlayWithText(testRestaurant.name)))
-    }
-
-    @Test
     fun tappingARestaurantRevealsInformation() {
         val expectedLocation = testRestaurant.location
 
@@ -127,9 +69,9 @@ class EatOutToHelpOutJourneyTest {
 
         mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
 
-        onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
+        onMapView().check(matches(isDisplayed()))
 
-        onView(withId(R.id.mainMap)).perform(clickOnMarkerWithText(testRestaurant.name))
+        onMapView().perform(clickOnMarkerWithText(testRestaurant.name))
     }
 
     @Test
@@ -140,32 +82,16 @@ class EatOutToHelpOutJourneyTest {
 
         mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
 
-        onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
+        onMapView().check(matches(isDisplayed()))
 
-        onView(withId(R.id.mainMap)).perform(clickOnMarkerWithText(testRestaurant.name))
+        onMapView().perform(clickOnMarkerWithText(testRestaurant.name))
 
-        onView(withId(R.id.viewRestaurant)).perform(click())
+        SystemClock.sleep(1000)
+
+        onMapView().perform(clickOnInfoWindow())
+
+        SystemClock.sleep(1000)
 
         assertThat(mockServiceLayer.mockRestaurantInfoProvider.infoProvidedForRestaurant, `is`(testRestaurant))
-
-        onView(withId(R.id.viewRestaurant)).check(doesNotExist())
-    }
-
-    @Test
-    fun willLoadRestaurantsWhenGridLocationChanges() {
-        val expectedLocation = testRestaurant.location
-        val expectedNewRestaurant = Restaurant("Freshly Loaded Restaurant", "TS1 0DE", Location(51.50834, -0.12570))
-
-        mockServiceLayer.mockLastViewedLocationService.simulateLastViewedLocation(expectedLocation)
-
-        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(expectedLocation, listOf(testRestaurant))
-        mockServiceLayer.mockRestaurantService.simulateRestaurantsAvailable(Location(51.50834, -0.12570), listOf(expectedNewRestaurant))
-
-        onView(withId(R.id.mainMap)).check(matches(isDisplayed()))
-
-        onView(withId(R.id.mainMap)).perform(swipeUp())
-
-        onView(withId(R.id.mainMap)).check(matches(hasOverlayWithText(expectedNewRestaurant.name)))
-        onView(withId(R.id.mainMap)).check(matches(not(hasOverlayWithText(testRestaurant.name))))
     }
 }

@@ -13,7 +13,6 @@
         android:layout_height="match_parent"
         />
 
-
     <ImageView
         android:id="@+id/logo"
         app:layout_constraintStart_toStartOf="parent"
